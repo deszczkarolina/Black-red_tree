@@ -1,3 +1,5 @@
+import scala.annotation.tailrec
+
 abstract class Color
 
 case object Red extends Color
@@ -26,7 +28,7 @@ object BRTree {
   }
 
   private def ins[A: Ordering](x: A)(tree: BRTree[A]): BRTree[A] = {
-    tree match {
+     tree match {
       case Leaf => Branch(Red, x, Leaf, Leaf)
       case Branch(_, value, left, right) =>
         if (Ordering[A].compare(x, value) < 0) balance(Black, x, ins(value)(left), right)
@@ -71,8 +73,8 @@ object BRTree {
   }
   private def redden[A](tree: BRTree[A]): BRTree[A] = {
     tree match {
-      //case Leaf => error
-      //case LeafDoubleBlack => error
+      case Leaf => fail("it's not possible to make Leaf red")
+      case LeafDoubleBlack => fail("it's not possible to make DoubleBlackLeaf red")
       case Branch(_, value, left, right) => Branch(Red, value, left, right)
     }
   }
@@ -82,12 +84,12 @@ object BRTree {
       case NegativeBlack => Red
       case Red => Black
       case Black => DoubleBlack
-      //case DoubleBlack => error
+      case DoubleBlack => fail("it's not possible to make DoubleBlack blacker")
     }
   }
   private def redder(color: Color): Color = {
     color match {
-      //case NegativeBlack => error
+      case NegativeBlack => fail("it's not possible to make NegativeBlack redder")
       case Red => NegativeBlack
       case Black => Red
       case DoubleBlack => Black
@@ -97,7 +99,7 @@ object BRTree {
   private def blacker[A](tree: BRTree[A]): BRTree[A] = {
     tree match {
       case Leaf => LeafDoubleBlack
-      //case LeafDoubleBlack => error
+      case LeafDoubleBlack => fail("it's not possible to make DoubleBlackLeaf blacker")
       case Branch(color, value, left, right) => Branch(blacker(color), value, left, right)
     }
   }
@@ -105,17 +107,18 @@ object BRTree {
   private def redder[A](tree: BRTree[A]): BRTree[A] = {
     tree match {
       case LeafDoubleBlack => Leaf
-      //case Leaf => error
+      case Leaf => fail("it's not possible to make Leaf redder")
       case Branch(color, value, left, right) => Branch(redder(color), value, left, right)
     }
   }
 
-  def find[A: Ordering](x: A)(tree: BRTree[A]): Boolean = {
+  @tailrec
+  def contains[A: Ordering](tree: BRTree[A])(x: A): Boolean = {
     tree match {
       case Leaf => false
       case Branch(_, value, left, right) =>
-        if (Ordering[A].compare(x, value) < 0) find(x)(left)
-        else if (Ordering[A].compare(x, value) > 0) find(x)(right)
+        if (Ordering[A].compare(x, value) < 0) contains(left)(x)
+        else if (Ordering[A].compare(x, value) > 0) contains(right)(x)
         else true
     }
   }
@@ -166,13 +169,49 @@ object BRTree {
     }
   }
 
+  @tailrec
   private def max[A](tree: BRTree[A]): A = {
     tree match {
-      //case Leaf => error
+      case Leaf => fail("leaf has no max value")
       case Branch(_, x, _, Leaf) => x
       case Branch(_, _, _, r) => max(r)
     }
   }
+
+  @tailrec
+  def union[A:Ordering](tree: BRTree[A])(other: BRTree[A]):BRTree[A] = {
+    tree match {
+      case Leaf => tree
+      case Branch(_,value,_,_) =>
+        del(value)(tree)
+        insert(value)(other)
+        union(tree)(other)
+    }
+  }
+
+  def intersection[A:Ordering](tree: BRTree[A])(other: BRTree[A]):BRTree[A] = {
+      intersect(tree)(other)()
+    }
+
+  @tailrec
+  private def intersect[A:Ordering](tree: BRTree[A])(other:BRTree[A])(result: BRTree[A] = Leaf):BRTree[A] = {
+      tree match {
+        case Leaf => result
+        case Branch(_,value,_,_) =>
+          if (contains(other)(value)) {
+            del(value)(tree)
+            insert(value)(result)
+            intersect(tree)(other)(result)
+          }
+          else {
+            del(value)(tree)
+            intersect(tree)(other)(result)
+          }
+      }
+  }
+
+
+  private def fail(msg: String) = throw new Exception(msg)
 }
 
 
