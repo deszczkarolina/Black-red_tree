@@ -117,9 +117,9 @@ object BRTree {
   private def ins[A: Ordering](x: A)(tree: BRTree[A]): BRTree[A] = {
     tree match {
       case Leaf => Node(Red, x, Leaf, Leaf)
-      case Node(_, value, left, right) =>
-        if (Ordering[A].compare(x, value) > 0) balance(Black, x, ins(value)(left), right)
-        else if (Ordering[A].compare(x, value) < 0) balance(Black, x, left, ins(value)(right))
+      case Node(color, value, left, right) =>
+        if (Ordering[A].compare(x, value) < 0) balance(color, value, ins(x)(left), right)
+        else if (Ordering[A].compare(x, value) > 0) balance(color, value, left, ins(x)(right))
         else tree
     }
   }
