@@ -24,7 +24,7 @@ case object NegativeBlack extends Color
 
 /** Black Red Tree class.
   * It's a binary tree, which fullfills additional constraints:
-  *   - root is black
+  *     - root is black
   *     - leaves are black
   *     - each red node has two black children
   *     - number of black nodes in each path from root to any leaf node has to be the same
@@ -79,7 +79,7 @@ object BRTree {
   def apply[A](value: A): Node[A] = new Node(value)
 
   /**
-    * method which returns height of the tree. Height of a leaf is 0.
+    * returns height of the tree. Height of a leaf is 0.
     *
     * @param tree tree object which hight is beeing calculated
     * @tparam A data type
@@ -93,7 +93,7 @@ object BRTree {
   }
 
   /**
-    * method which inserts a new element to existing tree. If value already exists in a tree, the tree is returned with no changes.
+    * inserts a new element to existing tree. If value already exists in a tree, the tree is returned with no changes.
     * After insertion tree is balanced and all color-constrains are preserved.
     *
     * @param x    value to be added to the tree
@@ -106,7 +106,7 @@ object BRTree {
   }
 
   /**
-    * Auxiliary method which adds element to the tree. After insertion tree is balanced, however color constraints are violated.
+    * Auxiliary method, adds element to the tree. After insertion tree is balanced, however color constraints are violated.
     *
     * @param x    value to be added to the tree
     * @param tree tree to which the value will be added
@@ -124,7 +124,7 @@ object BRTree {
     }
   }
 
-  /** method balancing a tree. Depending on the tree being balanced performs left or right rotation.
+  /** balances a tree. Depending on the tree being balanced performs left or right rotation.
     *
     * @param color node's color
     * @param value node's value
@@ -160,6 +160,17 @@ object BRTree {
       case (c, x, a, b) => Node(c, x, a, b)
     }
 
+  def isBalanced[A](tree:BRTree[A]):Boolean = {
+    tree match {
+      case Leaf => true
+      case Node(_,_,left,right) =>
+        if ((height(left) - height(right)).abs <= 1 &&
+          isBalanced(left) && isBalanced(right)) true
+        else false
+
+    }
+  }
+
   /** Auxiliary method, changes node's color to black
     *
     * @param tree tree which color will be changed
@@ -189,7 +200,7 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method which performs "color math", makes color blacker, according to below rules:
+  /** Auxiliary method, performs "color math", makes color blacker, according to below rules:
     *   - NegativeBlack => Red
     *   - Red => Black
     *   - Black => DoubleBlack
@@ -208,7 +219,7 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method which performs "color math", makes color redder, according to below rules:
+  /** Auxiliary method, performs "color math", makes color redder, according to below rules:
     *   - DoubleBlack => Black
     *   - Black => Red
     *   - Red => NegativeBlack
@@ -256,7 +267,7 @@ object BRTree {
     }
   }
 
-  /** Method which checks if value exists in a tree. If exists returns true, otherwise returns false
+  /** checks if value exists in a tree. If exists returns true, otherwise returns false
     *
     * @param tree tree in which value is searched
     * @param x    searched value
@@ -275,7 +286,7 @@ object BRTree {
     }
   }
 
-  /** Method which deletes value from a given tree. After deletion tree is balanced and preseres
+  /** deletes value from a given tree. After deletion tree is balanced and preseres
     * black-red constraints
     *
     * @param value value to be deleted
@@ -284,10 +295,11 @@ object BRTree {
     * @return tree with removed value
     */
   def delete[A: Ordering](value: A)(tree: BRTree[A]): BRTree[A] = {
+    if (!contains(tree)(value)) fail("value: " + value + "doesn't exist")
     blacken(del(value)(tree))
   }
 
-  /** Auxiliary method. Performs deletion, resulting tree is balanced but doesn't
+  /** Auxiliary method, performs deletion, resulting tree is balanced but doesn't
     * preserve black-red constraints
     *
     * @param value value to be deleted
@@ -305,7 +317,7 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method. Performs deletion, resulting tree is unbalanced and doesn't
+  /** Auxiliary method, performs deletion, resulting tree is unbalanced and doesn't
     * preserve black-red constraints.
     *
     * @param tree tree from which element will be removed
@@ -323,7 +335,7 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method. Deletes max value in a given tree, resulting tree is unbalanced and doesn't
+  /** Auxiliary method, deletes max value in a given tree, resulting tree is unbalanced and doesn't
     * preserve black-red constraints.
     *
     * @param tree tree from which max value will be removed
@@ -355,7 +367,7 @@ object BRTree {
   }
 
 
-  /** Auxiliary method. Checks if tree color is DoubleBlack
+  /** Auxiliary method, checks if tree color is DoubleBlack
     *
     * @tparam A data type
     * @return true if tree is DoubleBlack, false otherwise
@@ -368,7 +380,7 @@ object BRTree {
     }
   }
 
-  /** Method which returns max value in a tree
+  /** returns max value in a tree
     * On attempt of finding max in Leaf exception is thrown
     *
     * @param tree tree in which max is searched
@@ -377,15 +389,18 @@ object BRTree {
     */
 
   @tailrec
-  private def max[A](tree: BRTree[A]): A = {
+   def max[A](tree: BRTree[A]): A = {
     tree match {
       case Leaf => fail("leaf has no max value")
-      case Node(_, x, _, Leaf) => x
-      case Node(_, _, _, r) => max(r)
+      case Node(_, x, _, right) =>
+        right match {
+          case Leaf => x
+          case x:Node[A]=> max(x)
+       }
     }
   }
 
-  /** Method which returns union of two trees.
+  /** returns union of two trees.
     *
     * @param tree  tree on which union will be performed
     * @param other tree on which union will be performed
@@ -397,13 +412,11 @@ object BRTree {
     tree match {
       case Leaf => other
       case Node(_, value, _, _) =>
-        del(value)(tree)
-        insert(value)(other)
-        union(tree)(other)
+       union(delete(value)(tree))(insert(value)(other))
     }
   }
 
-  /** Method which returns intersection of two trees.
+  /** returns intersection of two trees.
     * Returned tree is balanced and preserves all black-red constraints
     * @param tree  tree on which intersection will be performed
     * @param other tree on which intersection will be performed
@@ -415,7 +428,7 @@ object BRTree {
   }
 
   /**
-    * Auxiliary method which calculates intersection of two trees.
+    * Auxiliary method, calculates intersection of two trees.
     * Returned tree is balanced and preserves all black-red constraints
     *
     * @param tree   tree on which intersection will be performed, common elements are deleted from this tree
@@ -430,36 +443,41 @@ object BRTree {
       case Leaf => result
       case Node(_, value, _, _) =>
         if (contains(other)(value)) {
-          del(value)(tree)
-          insert(value)(result)
-          intersect(tree)(other)(result)
+          intersect(delete(value)(tree))(other)(insert(value)(result))
         }
         else {
-          del(value)(tree)
-          intersect(tree)(other)(result)
+          intersect(delete(value)(tree))(other)(result)
         }
     }
   }
 
-  /** Method which throws an exception, when invalid operation is performed
+  /** throws an exception, when invalid operation is performed
     *
     * @param msg exception message
     * @return new exception
     */
   private def fail(msg: String) = throw new Exception(msg)
 
-  def print[A](tree: BRTree[A]): Unit = {
+  def hasRedNodeBlackChildren[A](tree: BRTree[A]):Boolean ={
     tree match {
-      case Leaf =>
-      case Node(c, v, l, r) => {
-        print(l)
-        println("color: " + c + " value: " + v + " left:" + l + " right: " + r)
-        print(r)
-      }
+      case Node(Red, _, left, right) =>
+        left match {
+          case Node(c, _, _, _) => if (c == Red) return false
+        }
+        right match {
+          case Node(c, _, _, _) => if (c == Red) return false
+        }
+        true
     }
   }
 
-}
+
+
+
+
+  }
+
+
 
 
 object HelloWorld {
