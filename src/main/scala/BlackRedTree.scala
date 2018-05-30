@@ -30,7 +30,7 @@ case object NegativeBlack extends Color
   *     - number of black nodes in each path from root to any leaf node has to be the same
   *
   */
-sealed abstract class BRTree[+A] {
+sealed abstract class RBTree[+A] {
   def color: Color
 }
 
@@ -39,7 +39,7 @@ sealed abstract class BRTree[+A] {
   *
   */
 
-case object Leaf extends BRTree[Nothing] {
+case object Leaf extends RBTree[Nothing] {
   def color: Color = Black
 }
 
@@ -47,7 +47,7 @@ case object Leaf extends BRTree[Nothing] {
   * Auxiliary object used in deletion algorithm
   */
 
-case object LeafDoubleBlack extends BRTree[Nothing] {
+case object LeafDoubleBlack extends RBTree[Nothing] {
   def color: Color = DoubleBlack
 }
 
@@ -59,7 +59,7 @@ case object LeafDoubleBlack extends BRTree[Nothing] {
   * @param right node's right child
   * @tparam A value type
   */
-case class Node[+A](color: Color = Black, value: A, left: BRTree[A] = Leaf, right: BRTree[A] = Leaf) extends BRTree[A] {
+case class Node[+A](color: Color = Black, value: A, left: RBTree[A] = Leaf, right: RBTree[A] = Leaf) extends RBTree[A] {
   def this(value: A) = this(Black, value, Leaf, Leaf)
 }
 
@@ -67,7 +67,7 @@ case class Node[+A](color: Color = Black, value: A, left: BRTree[A] = Leaf, righ
 /** main Black red tree object. Provides methods performed on trees.
   */
 
-object BRTree {
+object RBTree {
 
   /**
     * constructor which creates Node with leaves as its children
@@ -85,7 +85,7 @@ object BRTree {
     * @tparam A data type
     * @return height od a tree
     */
-  def height[A](tree: BRTree[A]): Int = {
+  def height[A](tree: RBTree[A]): Int = {
     tree match {
       case Leaf => 0
       case Node(_, _, left, right) => 1 + math.max(height(left), height(right))
@@ -94,19 +94,19 @@ object BRTree {
 
   /**
     * inserts a new element to existing tree. If value already exists in a tree, the tree is returned with no changes.
-    * After insertion tree is balanced and all color-constrains are preserved.
+    * After insertion all color-constrains are preserved.
     *
     * @param x    value to be added to the tree
     * @param tree tree to which the value will be added
     * @tparam A value type
     * @return new black red tree with element added
     */
-  def insert[A: Ordering](x: A)(tree: BRTree[A]): BRTree[A] = {
+  def insert[A: Ordering](x: A)(tree: RBTree[A]): RBTree[A] = {
     blacken(ins(x)(tree))
   }
 
   /**
-    * Auxiliary method, adds element to the tree. After insertion tree is balanced, however color constraints are violated.
+    * Auxiliary method, adds element to the tree. After insertion color constraints are violated.
     *
     * @param x    value to be added to the tree
     * @param tree tree to which the value will be added
@@ -114,7 +114,7 @@ object BRTree {
     * @return new tree with element added (with color constraints violated)
     */
 
-  private def ins[A: Ordering](x: A)(tree: BRTree[A]): BRTree[A] = {
+  private def ins[A: Ordering](x: A)(tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => Node(Red, x, Leaf, Leaf)
       case Node(color, value, left, right) =>
@@ -133,7 +133,7 @@ object BRTree {
     * @tparam A data type
     * @return balanced tree
     */
-  private def balance[A](color: Color, value: A, left: BRTree[A], right: BRTree[A]): BRTree[A] =
+  private def balance[A](color: Color, value: A, left: RBTree[A], right: RBTree[A]): RBTree[A] =
     (color, value, left, right) match {
       case (Black, z, Node(Red, y, Node(Red, x, a, b), c), d) =>
         Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
@@ -160,24 +160,13 @@ object BRTree {
       case (c, x, a, b) => Node(c, x, a, b)
     }
 
-  def isBalanced[A](tree:BRTree[A]):Boolean = {
-    tree match {
-      case Leaf => true
-      case Node(_,_,left,right) =>
-        if ((height(left) - height(right)).abs <= 1 &&
-          isBalanced(left) && isBalanced(right)) true
-        else false
-
-    }
-  }
-
   /** Auxiliary method, changes node's color to black
     *
     * @param tree tree which color will be changed
     * @tparam A data type
     * @return tree node with black color
     */
-  private def blacken[A](tree: BRTree[A]): BRTree[A] = {
+  private def blacken[A](tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => tree
       case LeafDoubleBlack => Leaf
@@ -192,7 +181,7 @@ object BRTree {
     * @tparam A data type
     * @return tree node with black color
     */
-  private def redden[A](tree: BRTree[A]): BRTree[A] = {
+  private def redden[A](tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => fail("it's not possible to make Leaf red")
       case LeafDoubleBlack => fail("it's not possible to make DoubleBlackLeaf red")
@@ -200,15 +189,14 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method, performs "color math", makes color blacker, according to below rules:
+ /** Auxiliary method, performs "color math", makes color blacker, according to below rules:
     *   - NegativeBlack => Red
     *   - Red => Black
     *   - Black => DoubleBlack
     * On attempt of blacken DoubleBlack an exception will be thrown
     *
     * @param color color that will be changed
-    * @return Color
-    */
+    * @return Color */
 
   private def blacker(color: Color): Color = {
     color match {
@@ -244,7 +232,7 @@ object BRTree {
     * @return tree
     */
 
-  private def blacker[A](tree: BRTree[A]): BRTree[A] = {
+  private def blacker[A](tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => LeafDoubleBlack
       case LeafDoubleBlack => fail("it's not possible to make DoubleBlackLeaf blacker")
@@ -259,7 +247,7 @@ object BRTree {
     * @return tree
     */
 
-  private def redder[A](tree: BRTree[A]): BRTree[A] = {
+  private def redder[A](tree: RBTree[A]): RBTree[A] = {
     tree match {
       case LeafDoubleBlack => Leaf
       case Leaf => fail("it's not possible to make Leaf redder")
@@ -276,7 +264,7 @@ object BRTree {
     */
 
   @tailrec
-  def contains[A: Ordering](tree: BRTree[A])(x: A): Boolean = {
+  def contains[A: Ordering](tree: RBTree[A])(x: A): Boolean = {
     tree match {
       case Leaf => false
       case Node(_, value, left, right) =>
@@ -286,7 +274,7 @@ object BRTree {
     }
   }
 
-  /** deletes value from a given tree. After deletion tree is balanced and preseres
+  /** deletes value from a given tree. After deletion tree preserves
     * black-red constraints
     *
     * @param value value to be deleted
@@ -294,12 +282,12 @@ object BRTree {
     * @tparam A data type
     * @return tree with removed value
     */
-  def delete[A: Ordering](value: A)(tree: BRTree[A]): BRTree[A] = {
+  def delete[A: Ordering](value: A)(tree: RBTree[A]): RBTree[A] = {
     if (!contains(tree)(value)) fail("value: " + value + "doesn't exist")
     blacken(del(value)(tree))
   }
 
-  /** Auxiliary method, performs deletion, resulting tree is balanced but doesn't
+  /** Auxiliary method, performs deletion, resulting tree doesn't
     * preserve black-red constraints
     *
     * @param value value to be deleted
@@ -307,7 +295,7 @@ object BRTree {
     * @tparam A data type
     * @return tree with removed value
     */
-  private def del[A: Ordering](value: A)(tree: BRTree[A]): BRTree[A] = {
+  private def del[A: Ordering](value: A)(tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => Leaf
       case Node(c, y, l, r) =>
@@ -317,14 +305,14 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method, performs deletion, resulting tree is unbalanced and doesn't
+  /** Auxiliary method, performs deletion, resulting tree  doesn't
     * preserve black-red constraints.
     *
     * @param tree tree from which element will be removed
     * @tparam A data type
     * @return tree with removed value
     */
-  private def remove[A: Ordering](tree: BRTree[A]): BRTree[A] = {
+  private def remove[A: Ordering](tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => Leaf
       case Node(Red, _, Leaf, Leaf) => Leaf
@@ -335,7 +323,7 @@ object BRTree {
     }
   }
 
-  /** Auxiliary method, deletes max value in a given tree, resulting tree is unbalanced and doesn't
+  /** Auxiliary method, deletes max value in a given tree, resulting tree is doesn't
     * preserve black-red constraints.
     *
     * @param tree tree from which max value will be removed
@@ -343,7 +331,7 @@ object BRTree {
     * @return tree with removed max value
     */
 
-  private def removeMax[A: Ordering](tree: BRTree[A]): BRTree[A] = {
+  private def removeMax[A: Ordering](tree: RBTree[A]): RBTree[A] = {
     tree match {
       case Node(_, _, _, Leaf) => remove(tree)
       case Node(color, x, left, right) => bubble(color, x, left, removeMax(right))
@@ -361,7 +349,7 @@ object BRTree {
     * @return balanced tree, with no DoubleBlack leaves
     */
 
-  private def bubble[A](color: Color, value: A, left: BRTree[A], right: BRTree[A]): BRTree[A] = {
+  private def bubble[A](color: Color, value: A, left: RBTree[A], right: RBTree[A]): RBTree[A] = {
     if (isDoubleBlack(left) || isDoubleBlack(right)) balance(blacker(color), value, redder(left), redder(right))
     else balance(color, value, left, right)
   }
@@ -372,7 +360,7 @@ object BRTree {
     * @tparam A data type
     * @return true if tree is DoubleBlack, false otherwise
     */
-  private def isDoubleBlack[A](tree: BRTree[A]): Boolean = {
+  private def isDoubleBlack[A](tree: RBTree[A]): Boolean = {
     tree match {
       case LeafDoubleBlack => true
       case Node(DoubleBlack, _, _, _) => true
@@ -389,7 +377,7 @@ object BRTree {
     */
 
   @tailrec
-   def max[A](tree: BRTree[A]): A = {
+   def max[A](tree: RBTree[A]): A = {
     tree match {
       case Leaf => fail("leaf has no max value")
       case Node(_, x, _, right) =>
@@ -408,7 +396,7 @@ object BRTree {
     * @return tree which contains all values from both trees
     */
   @tailrec
-  def union[A: Ordering](tree: BRTree[A])(other: BRTree[A]): BRTree[A] = {
+  def union[A: Ordering](tree: RBTree[A])(other: RBTree[A]): RBTree[A] = {
     tree match {
       case Leaf => other
       case Node(_, value, _, _) =>
@@ -423,13 +411,13 @@ object BRTree {
     * @tparam A data type
     * @return tree which contains only those values which are present in both trees
     */
-  def intersection[A: Ordering](tree: BRTree[A])(other: BRTree[A]): BRTree[A] = {
+  def intersection[A: Ordering](tree: RBTree[A])(other: RBTree[A]): RBTree[A] = {
     intersect(tree)(other)()
   }
 
   /**
     * Auxiliary method, calculates intersection of two trees.
-    * Returned tree is balanced and preserves all black-red constraints
+    * Returned tree preserves all black-red constraints
     *
     * @param tree   tree on which intersection will be performed, common elements are deleted from this tree
     * @param other  tree on which intersection will be performed
@@ -438,7 +426,7 @@ object BRTree {
     * @return tree with elements that exist in both trees
     */
   @tailrec
-  private def intersect[A: Ordering](tree: BRTree[A])(other: BRTree[A])(result: BRTree[A] = Leaf): BRTree[A] = {
+  private def intersect[A: Ordering](tree: RBTree[A])(other: RBTree[A])(result: RBTree[A] = Leaf): RBTree[A] = {
     tree match {
       case Leaf => result
       case Node(_, value, _, _) =>
@@ -458,31 +446,88 @@ object BRTree {
     */
   private def fail(msg: String) = throw new Exception(msg)
 
-  def hasRedNodeBlackChildren[A](tree: BRTree[A]):Boolean ={
+
+  /**
+    * calculates the maximum length of black-nodes path from root to leaves
+    * @param tree tree which path length will be calculated
+    * @tparam A data type
+    * @return length of the longest black-node path
+    */
+  private def maxBlackPath[A](tree: RBTree[A]):Int = {
     tree match {
-      case Node(Red, _, left, right) =>
-        left match {
-          case Node(c, _, _, _) => if (c == Red) return false
-        }
-        right match {
-          case Node(c, _, _, _) => if (c == Red) return false
-        }
-        true
+      case Leaf => 1
+      case Node (color,_,left,right) =>
+        if (color == Black) 1 + math.max(maxBlackPath(left), maxBlackPath(right))
+        else math.max(maxBlackPath(left), maxBlackPath(right))
     }
   }
 
+  /**
+    * calculates the minimum length of black-nodes path from root to leaves
+    * @param tree tree which path length will be calculated
+    * @tparam A data type
+    * @return length of the shortest black-node path
+    */
+  private def minBlackPath[A](tree: RBTree[A]):Int = {
+    tree match {
+      case Leaf => 1
+      case Node (color,_,left,right) =>
+        if (color == Black) 1 + math.min(minBlackPath(left), minBlackPath(right))
+        else math.min(minBlackPath(left), minBlackPath(right))
+    }
+  }
 
+  /**
+    * checks if all paths from root to leaves have the same number of black nodes
+    * @param tree tree
+    * @tparam A data type
+    * @return true if all paths from root to leaves have the same number of black nodes, false otherwise
+    */
+  private def isBlackBalanced[A](tree:RBTree[A]):Boolean = {
+    if (maxBlackPath(tree) == minBlackPath(tree)) true
+    else false
+  }
 
+  /**
+    * checks if exists a red node with doesn't have two black children, which would violate red-black tree constraint
+    * @param tree tree
+    * @tparam A data type
+    * @return true if such node exists, false otherwise
+    */
+  private def hasAnyRedNodeRedChildren[A](tree:RBTree[A]):Boolean = {
+    tree match {
+      case Leaf => false
+      case Node(Black,_,left,right) => hasAnyRedNodeRedChildren(left) && hasAnyRedNodeRedChildren(right)
+      case Node(Red,_,left,right) =>
+        if (left.color == Black) hasAnyRedNodeRedChildren(left) && hasAnyRedNodeRedChildren(right)
+        else if (right.color == Black) hasAnyRedNodeRedChildren(left) && hasAnyRedNodeRedChildren(right)
+        else true
+    }
+  }
 
+  /**
+    * checks if tree fullfills red-black tree constraints
+    * @param tree tree
+    * @tparam A data type
+    * @return true if tree is Red-Black, false otherwise
+    */
+
+  def isTreeBlackRed[A](tree:RBTree[A]):Boolean = {
+    tree match {
+      case Node(color,_,_,_) => color == Black && !hasAnyRedNodeRedChildren(tree) && isBlackBalanced(tree)
+      case Leaf => true
+    }
+  }
 
   }
+
 
 
 
 
 object HelloWorld {
   def main(args: Array[String]): Unit = {
-    println("Hello, world!")
+
 
   }
 }
