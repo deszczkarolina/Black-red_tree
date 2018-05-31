@@ -21,7 +21,6 @@ case object DoubleBlack extends Color
 /** Auxiliary color, used in deletion algorithm. */
 case object NegativeBlack extends Color
 
-
 /** Black Red Tree class.
   * It's a binary tree, which fullfills additional constraints:
   *     - root is black
@@ -105,6 +104,13 @@ object RBTree {
     blacken(ins(x)(tree))
   }
 
+  private def blacken[A](tree: RBTree[A]): RBTree[A] = {
+    tree match {
+      case Leaf => tree
+      case LeafDoubleBlack => Leaf
+      case Node(_, value, left, right) => Node(Black, value, left, right)
+    }
+  }
   /**
     * Auxiliary method, adds element to the tree. After insertion color constraints are violated.
     *
@@ -121,137 +127,6 @@ object RBTree {
         if (Ordering[A].compare(x, value) < 0) balance(color, value, ins(x)(left), right)
         else if (Ordering[A].compare(x, value) > 0) balance(color, value, left, ins(x)(right))
         else tree
-    }
-  }
-
-  /** balances a tree. Depending on the tree being balanced performs left or right rotation.
-    *
-    * @param color node's color
-    * @param value node's value
-    * @param left  node's left child
-    * @param right node's right child
-    * @tparam A data type
-    * @return balanced tree
-    */
-  private def balance[A](color: Color, value: A, left: RBTree[A], right: RBTree[A]): RBTree[A] =
-    (color, value, left, right) match {
-      case (Black, z, Node(Red, y, Node(Red, x, a, b), c), d) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (Black, z, Node(Red, x, a, Node(Red, y, b, c)), d) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (Black, x, a, Node(Red, z, Node(Red, y, b, c), d)) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (Black, x, a, Node(Red, y, b, Node(Red, z, c, d))) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-
-      case (DoubleBlack, z, Node(Red, y, Node(Red, x, a, b), c), d) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (DoubleBlack, z, Node(Red, x, a, Node(Red, y, b, c)), d) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (DoubleBlack, x, a, Node(Red, z, Node(Red, y, b, c), d)) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (DoubleBlack, x, a, Node(Red, y, b, Node(Red, z, c, d))) =>
-        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
-      case (DoubleBlack, x, a, Node(NegativeBlack, z, Node(Black, y, b, c), d)) if d.color == Black =>
-        Node(Black, y, Node(Black, x, a, b), balance(Black, z, c, redden(d)))
-      case (DoubleBlack, z, Node(NegativeBlack, x, a, Node(Black, y, b, c)), d) if a.color == Black =>
-        Node(Black, y, balance(Black, x, redden(a), b), Node(Black, z, c, d))
-
-      case (c, x, a, b) => Node(c, x, a, b)
-    }
-
-  /** Auxiliary method, changes node's color to black
-    *
-    * @param tree tree which color will be changed
-    * @tparam A data type
-    * @return tree node with black color
-    */
-  private def blacken[A](tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case Leaf => tree
-      case LeafDoubleBlack => Leaf
-      case Node(_, value, left, right) => Node(Black, value, left, right)
-    }
-  }
-
-  /** Auxiliary method, changes node's color to red.
-    * On attempt of changing Leaf color to red an exception will be thrown (that would violate red-black constraints)
-    *
-    * @param tree tree which color will be changed
-    * @tparam A data type
-    * @return tree node with black color
-    */
-  private def redden[A](tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case Leaf => fail("it's not possible to make Leaf red")
-      case LeafDoubleBlack => fail("it's not possible to make DoubleBlackLeaf red")
-      case Node(_, value, left, right) => Node(Red, value, left, right)
-    }
-  }
-
- /** Auxiliary method, performs "color math", makes color blacker, according to below rules:
-    *   - NegativeBlack => Red
-    *   - Red => Black
-    *   - Black => DoubleBlack
-    * On attempt of blacken DoubleBlack an exception will be thrown
-    *
-    * @param color color that will be changed
-    * @return Color */
-
-  private def blacker(color: Color): Color = {
-    color match {
-      case NegativeBlack => Red
-      case Red => Black
-      case Black => DoubleBlack
-      case DoubleBlack => fail("it's not possible to make DoubleBlack blacker")
-    }
-  }
-
-  /** Auxiliary method, performs "color math", makes color redder, according to below rules:
-    *   - DoubleBlack => Black
-    *   - Black => Red
-    *   - Red => NegativeBlack
-    * On attempt of redden DoubleBlack an exception will be thrown
-    *
-    * @param color color that will be changed
-    * @return Color
-    */
-  private def redder(color: Color): Color = {
-    color match {
-      case NegativeBlack => fail("it's not possible to make NegativeBlack redder")
-      case Red => NegativeBlack
-      case Black => Red
-      case DoubleBlack => Black
-    }
-  }
-
-  /** Auxiliary method, makes tree 'blacker' - performs blacker method on node's color
-    *
-    * @param tree tree which color will be changed
-    * @tparam A data type
-    * @return tree
-    */
-
-  private def blacker[A](tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case Leaf => LeafDoubleBlack
-      case LeafDoubleBlack => fail("it's not possible to make DoubleBlackLeaf blacker")
-      case Node(color, value, left, right) => Node(blacker(color), value, left, right)
-    }
-  }
-
-  /** Auxiliary method, makes tree 'redder' - performs redder method on node's color
-    *
-    * @param tree tree which color will be changed
-    * @tparam A data type
-    * @return tree
-    */
-
-  private def redder[A](tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case LeafDoubleBlack => Leaf
-      case Leaf => fail("it's not possible to make Leaf redder")
-      case Node(color, value, left, right) => Node(redder(color), value, left, right)
     }
   }
 
@@ -274,117 +149,143 @@ object RBTree {
     }
   }
 
-  /** deletes value from a given tree. After deletion tree preserves
-    * black-red constraints
-    *
-    * @param value value to be deleted
-    * @param tree  tree from which element will be removed
-    * @tparam A data type
-    * @return tree with removed value
-    */
-  def delete[A: Ordering](value: A)(tree: RBTree[A]): RBTree[A] = {
-    if (!contains(tree)(value)) fail("value: " + value + "doesn't exist")
-    blacken(del(value)(tree))
-  }
 
-  /** Auxiliary method, performs deletion, resulting tree doesn't
-    * preserve black-red constraints
-    *
-    * @param value value to be deleted
-    * @param tree  tree from which element will be removed
-    * @tparam A data type
-    * @return tree with removed value
-    */
-  private def del[A: Ordering](value: A)(tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case Leaf => Leaf
-      case Node(c, y, l, r) =>
-        if (Ordering[A].compare(value, y) < 0) bubble(c, y, del(value)(l), r)
-        else if (Ordering[A].compare(value, y) > 0) bubble(c, y, l, del(value)(r))
-        else remove(tree)
-    }
-  }
-
-  /** Auxiliary method, performs deletion, resulting tree  doesn't
-    * preserve black-red constraints.
-    *
-    * @param tree tree from which element will be removed
-    * @tparam A data type
-    * @return tree with removed value
-    */
-  private def remove[A: Ordering](tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case Leaf => Leaf
-      case Node(Red, _, Leaf, Leaf) => Leaf
-      case Node(Black, _, Leaf, Leaf) => LeafDoubleBlack
-      case Node(Black, _, Leaf, Node(Red, x, left, right)) => Node(Black, x, left, right)
-      case Node(Black, _, Node(Red, x, left, right), Leaf) => Node(Black, x, left, right)
-      case Node(color, _, left, right) => bubble(color, max(left), removeMax(left), right)
-    }
-  }
-
-  /** Auxiliary method, deletes max value in a given tree, resulting tree is doesn't
-    * preserve black-red constraints.
-    *
-    * @param tree tree from which max value will be removed
-    * @tparam A data type
-    * @return tree with removed max value
-    */
-
-  private def removeMax[A: Ordering](tree: RBTree[A]): RBTree[A] = {
-    tree match {
-      case Node(_, _, _, Leaf) => remove(tree)
-      case Node(color, x, left, right) => bubble(color, x, left, removeMax(right))
-    }
-  }
-
-  /** Auxiliary method. If one of tree's children is DoubleBlack makes tree blacker and its children redder.
-    * Then performs balancing. This operation helps to eliminate DoubleBlack nodes, or moves them upward.
+  /** balances a tree. Depending on the tree being balanced performs left or right rotation.
     *
     * @param color node's color
     * @param value node's value
     * @param left  node's left child
     * @param right node's right child
     * @tparam A data type
-    * @return balanced tree, with no DoubleBlack leaves
+    * @return balanced tree
     */
 
-  private def bubble[A](color: Color, value: A, left: RBTree[A], right: RBTree[A]): RBTree[A] = {
-    if (isDoubleBlack(left) || isDoubleBlack(right)) balance(blacker(color), value, redder(left), redder(right))
-    else balance(color, value, left, right)
-  }
+  private def balance[A](color: Color, value: A, left: RBTree[A], right: RBTree[A]): RBTree[A] =
+    (color, value, left, right) match {
+      case (Black, z, Node(Red, y, Node(Red, x, a, b), c), d) =>
+        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
+      case (Black, z, Node(Red, x, a, Node(Red, y, b, c)), d) =>
+        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
+      case (Black, x, a, Node(Red, z, Node(Red, y, b, c), d)) =>
+        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
+      case (Black, x, a, Node(Red, y, b, Node(Red, z, c, d))) =>
+        Node(Red, y, Node(Black, x, a, b), Node(Black, z, c, d))
 
+      case (DoubleBlack, x, a, Node(Red, z, Node(Red, y, b, c), d)) =>
+        Node(Black, y, Node(Black, x, a, b), Node(Black, z, c, d))
+      case (DoubleBlack, z, Node(Red, x, a, Node(Red, y, b, c)), d) =>
+        Node(Black, y, Node(Black, x, a, b), Node(Black, z, c, d))
 
-  /** Auxiliary method, checks if tree color is DoubleBlack
-    *
+      case (c, x, a, b) => Node(c, x, a, b)
+    }
+
+  /**
+    * makes node with two black children red
+    * @param tree tree
     * @tparam A data type
-    * @return true if tree is DoubleBlack, false otherwise
+    * @return modified node
     */
-  private def isDoubleBlack[A](tree: RBTree[A]): Boolean = {
+  private def redden[A](tree: RBTree[A]): RBTree[A] = {
     tree match {
-      case LeafDoubleBlack => true
-      case Node(DoubleBlack, _, _, _) => true
-      case _ => false
+      case Node(Black, x, Node(Black, y, a, b), Node(Black, z, c, d)) =>
+        Node(Red, x, Node(Black, y, a, b), Node(Black, z, c, d))
+      case LeafDoubleBlack => Leaf
+      case _ => tree
     }
   }
 
-  /** returns max value in a tree
-    * On attempt of finding max in Leaf exception is thrown
-    *
-    * @param tree tree in which max is searched
+  /**
+    * performs rotation
+    * @param color node's color
+    * @param value node's value
+    * @param left node's left child
+    * @param right node's right child
     * @tparam A data type
-    * @return max value in a tree
+    * @return tree after rotation
     */
 
-  @tailrec
-   def max[A](tree: RBTree[A]): A = {
+  private def rotate[A](color: Color, value: A, left: RBTree[A], right: RBTree[A]): RBTree[A] = {
+    (color, value, left, right) match {
+      case (Red, y, Node(DoubleBlack, x, a, b), Node(Black, z, c, d)) =>
+        balance(Black, z, Node(Red, y, Node(Black, x, a, b), c), d)
+      case (Red, y, LeafDoubleBlack, Node(Black, z, c, d)) =>
+        balance(Black, z, Node(Red, y, Leaf, c), d)
+      case (Red, y, Node(Black, x, a, b), Node(DoubleBlack, z, c, d)) =>
+        balance(Black, x, a, Node(Red, y, b, Node(Black, z, c, d)))
+      case (Red, y, Node(Black, x, a, b), LeafDoubleBlack) =>
+        balance(Black, x, a, Node(Red, y, b, Leaf))
+      case (Black, y, Node(DoubleBlack, x, a, b), Node(Black, z, c, d)) =>
+        balance(DoubleBlack, z, Node(Red, y, Node(Black, x, a, b), c), d)
+      case (Black, y, LeafDoubleBlack, Node(Black, z, c, d)) =>
+        balance(DoubleBlack, z, Node(Red, y, Leaf, c), d)
+      case (Black, y, Node(Black, x, a, b), Node(DoubleBlack, z, c, d)) =>
+        balance(DoubleBlack, x, a, Node(Red, y, b, Node(Black, z, c, d)))
+      case (Black, y, Node(Black, x, a, b), LeafDoubleBlack) =>
+        balance(DoubleBlack, x, a, Node(Red, y, b, Leaf))
+      case (Black, x, Node(DoubleBlack, w, a, b), Node(Red, z, Node(Black, y, c, d), e)) =>
+        Node(Black, z, balance(Black, y, Node(Red, x, Node(Black, w, a, b), c), d), e)
+      case (Black, x, LeafDoubleBlack, Node(Red, z, Node(Black, y, c, d), e)) =>
+        Node(Black, z, balance(Black, y, Node(Red, x, c, Leaf), d), e)
+      case (Black, y, Node(Red, w, a, Node(Black, x, b, c)), Node(DoubleBlack, z, d, e)) =>
+        Node(Black, w, a, balance(Black, x, b, Node(Red, y, c, Node(Black, z, d, e))))
+      case (Black, y, Node(Red, w, a, Node(Black, x, b, c)), LeafDoubleBlack) =>
+        Node(Black, w, a, balance(Black, x, b, Node(Red, y, c, Leaf)))
+      case (c, x, a, b) => Node(c, x, a, b)
+    }
+  }
+
+
+  def minDel[A: Ordering](tree: RBTree[A]): (A, RBTree[A]) = {
     tree match {
-      case Leaf => fail("leaf has no max value")
-      case Node(_, x, _, right) =>
-        right match {
-          case Leaf => x
-          case x:Node[A]=> max(x)
-       }
+      case Node(Red, x, Leaf, Leaf) => (x, Leaf)
+      case Node(Black, x, Leaf, Leaf) => (x, LeafDoubleBlack)
+      case Node(Black, x, Leaf, Node(Red, y, Leaf, Leaf)) => (x, Node(Black, y, Leaf, Leaf))
+      case Node(color, x, a, b) => {
+        val (y, c)  = minDel(tree)
+        (y, rotate(color, x, c, b))
+      }
+    }
+  }
+
+  /**
+    * deletes a value from the tree. After deletion tree preserves all color constraints
+    * @param value value that will be removed
+    * @param tree tree from which value will be removed
+    * @tparam A data type
+    * @return tree without value
+    */
+  def delete[A: Ordering](value: A)(tree: RBTree[A]): RBTree[A] = {
+    if (!contains(tree)(value)) fail("value doesn't exist")
+    blacken(del(value)(redden(tree)))
+  }
+
+  /**
+    * auxiliary method, deletes value from the tree. After deletion color constraints may be violated
+    *@param value value that will be removed
+    * @param tree tree from which value will be removed
+    * @tparam A data type
+    * @return tree without value
+    */
+  private def del[A: Ordering](value: A)(tree: RBTree[A]): RBTree[A] = {
+    tree match {
+      case Leaf => Leaf
+      case Node(Red, y, Leaf, Leaf) =>
+        if (Ordering[A].compare(value, y) == 0) Leaf
+        else tree
+      case Node(Black, y, Leaf, Leaf) =>
+        if (Ordering[A].compare(value, y) == 0) LeafDoubleBlack
+        else tree
+      case Node(Black, z, Node(Red, y, Leaf, Leaf), Leaf) =>
+        if (Ordering[A].compare(value, z) < 0) Node(Black, z, del(value)(Node(Red, y, Leaf, Leaf)), Leaf)
+        else if (Ordering[A].compare(value, z) > 0) tree
+        else Node(Black, y, Leaf, Leaf)
+      case Node(color, y, l, r) =>
+        if (Ordering[A].compare(value, y) < 0) rotate(color, y, del(value)(l), r)
+        else if (Ordering[A].compare(value, y) > 0) rotate(color, y, l, del(value)(r))
+        else {
+          val (x, b)  = minDel(r)
+          rotate(color, x, l, b)
+        }
     }
   }
 
@@ -519,15 +420,5 @@ object RBTree {
     }
   }
 
-  }
-
-
-
-
-
-object HelloWorld {
-  def main(args: Array[String]): Unit = {
-
-
-  }
 }
+
