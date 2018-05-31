@@ -12,7 +12,7 @@ object Main extends App {
   private val help = """\s*help\s*""".r
   private val exit = """\s*exit\s*""".r
 
-  private def printHelp: Unit = {
+  private def printUsage: Unit = {
     println("Commands:\n" +
       "add [Int] - add value to RBTree\n" +
       "delete [Int] - remove value from RBTree\n" +
@@ -23,47 +23,47 @@ object Main extends App {
   }
 
   @tailrec
-  final def mainLoop: Unit = {
-
+  final def main: Unit = {
+  print("$")
     StdIn.readLine match {
       case addValue(v) => {
         val value = v.toInt
         if (!contains(testTree)(value)) {
-          println("Adding " + value)
           testTree = insert(value)(testTree)
+          println("tree after insertion: " + testTree)
         }
         else
           println("Value " + value + " already exists")
-        mainLoop
+        main
       }
       case deleteValue(v) => {
         val value = v.toInt
         if (contains(testTree)(value)) {
-          println("Removing " + value)
-          testTree = delete(value)(testTree)
+           testTree = delete(value)(testTree)
+          println("tree after deletion: " + testTree)
+
         }
         else
            println("Value " + value + " does not exist")
-        mainLoop
+        main
       }
       case containsValue(value) => {
         println(contains(testTree)(value.toInt))
-        mainLoop
+        main
       }
       case printTree(_*) => {
-        println("Printing...")
         println(testTree)
-        mainLoop
+        main
       }
       case help(_*) => {
-        printHelp
-        mainLoop
+        printUsage
+        main
       }
       case exit(_*) => println("Exiting...")
-      case _ => println("Incorrect input"); mainLoop
+      case _ => println("Incorrect input"); main
     }
   }
 
-  printHelp
-  mainLoop
+  printUsage
+  main
 }

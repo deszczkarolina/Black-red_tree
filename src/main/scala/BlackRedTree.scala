@@ -234,14 +234,19 @@ object RBTree {
     }
   }
 
-
+  /**
+    * deletes min value in subtree
+    * @param tree tree
+    * @tparam A data type
+    * @return tuple - (minimum value, tree without that value)
+    */
   def minDel[A: Ordering](tree: RBTree[A]): (A, RBTree[A]) = {
     tree match {
       case Node(Red, x, Leaf, Leaf) => (x, Leaf)
       case Node(Black, x, Leaf, Leaf) => (x, LeafDoubleBlack)
       case Node(Black, x, Leaf, Node(Red, y, Leaf, Leaf)) => (x, Node(Black, y, Leaf, Leaf))
       case Node(color, x, a, b) => {
-        val (y, c)  = minDel(tree)
+        val (y, c)  = minDel(a)
         (y, rotate(color, x, c, b))
       }
     }
