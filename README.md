@@ -1,5 +1,6 @@
-# Black-red_tree
+# Drzewo czerwono-czarne
 Projekt realizowany w ramach przedmiotu Języki przetwarzania symbolicznego.<br />
-Funkcyjna implementacja drzewa czerwono-czarnego wraz z podstawowymi operacjami na nim.<br /><br />
+Funkcyjna implementacja drzewa czerwono-czarnego wraz z operacjami dodawania, usuwania, wyszukiwania elementów,
+tworzenia sumy oraz przecięcia dwóch drzew czerwono-czarnych. .<br /><br />
 
-W pilku BlackRedTree.scala zostało zaimplementowane drzewo. Aby móc wykonać wybrane operacje na drzewie należy uruchomić poprzez sbt run. Dołączone zostały także krótkie testy, napisane do sprawdzenia poprawności działania. Można je uruchomić poprzez sbt test. 
+W pilku BlackRedTree.scala została zaimplementowana struktura drzewa czerwono-czarnego. W celu uruchomienia programu należy go uruchomić poprzez komendę sbt run. Dołączone zostały także krótkie testy jednostkowe, które sprawdzają poprawnośc działania zaimplementowanych operacji. Aby je uruchomić należy użyć polecenia sbt test. 
